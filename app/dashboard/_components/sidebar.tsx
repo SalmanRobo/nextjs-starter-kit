@@ -3,12 +3,14 @@
 import UserProfile from "@/components/user-profile";
 import clsx from "clsx";
 import {
-  Banknote,
   HomeIcon,
   LucideIcon,
   MessageCircleIcon,
   Settings,
   Upload,
+  Building2,
+  Calendar,
+  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -21,24 +23,29 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    label: "Overview",
+    label: "Dashboard",
     href: "/dashboard",
     icon: HomeIcon,
   },
   {
-    label: "Chat",
-    href: "/dashboard/chat",
-    icon: MessageCircleIcon,
+    label: "My Properties",
+    href: "/dashboard/properties",
+    icon: Building2,
   },
   {
-    label: "Upload",
+    label: "Inquiries",
+    href: "/dashboard/inquiries",
+    icon: MessageSquare,
+  },
+  {
+    label: "Viewings",
+    href: "/dashboard/viewings",
+    icon: Calendar,
+  },
+  {
+    label: "Media Library",
     href: "/dashboard/upload",
     icon: Upload,
-  },
-  {
-    label: "Payment Gated",
-    href: "/dashboard/payment",
-    icon: Banknote,
   },
 ];
 
@@ -55,7 +62,7 @@ export default function DashboardSideBar() {
             className="flex items-center font-semibold hover:cursor-pointer"
             href="/"
           >
-            <span>Nextjs Starter Kit</span>
+            <span>ALDARI PropTech</span>
           </Link>
         </div>
 

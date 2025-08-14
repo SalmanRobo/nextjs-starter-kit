@@ -1,88 +1,81 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
-// Edge Runtime compatible middleware - minimal and fast
+// PRODUCTION-CRITICAL: Ultra-minimal Edge Runtime middleware
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   
-  // Skip static files and internal paths
+  // Skip static files and API routes immediately
   if (
     pathname.startsWith('/_next/') ||
-    pathname.startsWith('/api/health') ||
+    pathname.startsWith('/api/') ||
     pathname.startsWith('/_vercel') ||
-    pathname.includes('.') // Skip all files with extensions
+    pathname.includes('.')
   ) {
     return NextResponse.next()
   }
 
-  // Create minimal response first
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
+  // Create response with essential security headers
+  const response = NextResponse.next()
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-Frame-Options', 'DENY')
 
   try {
-    // Only proceed if we have required environment variables
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      return response
+    // CRITICAL: Check environment variables exist
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('PROD ERROR: Missing Supabase environment variables')
+      return response // Allow through without auth check
     }
 
-    // Create Supabase client
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-            response = NextResponse.next({
-              request: {
-                headers: request.headers,
-              },
-            })
-            cookiesToSet.forEach(({ name, value, options }) =>
-              response.cookies.set(name, value, options)
-            )
-          },
+    // PRODUCTION-OPTIMIZED: Minimal Supabase client
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
         },
-      }
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options)
+          })
+        },
+      },
+    })
+
+    // CRITICAL: Fast auth check with timeout
+    const authPromise = supabase.auth.getUser()
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Auth timeout')), 3000)
     )
 
-    // Get user session
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await Promise.race([authPromise, timeoutPromise])
 
-    // Simple route protection
-    const isProtectedRoute = pathname.startsWith('/dashboard') || 
-                           pathname.startsWith('/admin') || 
-                           pathname.startsWith('/settings')
-    const isAuthRoute = pathname.startsWith('/sign-in') || 
-                       pathname.startsWith('/sign-up')
+    // SIMPLIFIED: Route protection logic
+    const protectedRoutes = ['/dashboard', '/admin', '/settings']
+    const authRoutes = ['/sign-in', '/sign-up']
+    
+    const isProtected = protectedRoutes.some(route => pathname.startsWith(route))
+    const isAuth = authRoutes.some(route => pathname.startsWith(route))
 
-    if (user) {
+    if (user && isAuth) {
       // Redirect authenticated users away from auth pages
-      if (isAuthRoute) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/dashboard'
-        return NextResponse.redirect(url)
-      }
-    } else {
-      // Redirect unauthenticated users from protected routes
-      if (isProtectedRoute) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/sign-in'
-        url.searchParams.set('redirectTo', pathname)
-        return NextResponse.redirect(url)
-      }
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+
+    if (!user && isProtected) {
+      // Redirect unauthenticated users to sign in
+      const signInUrl = new URL('/sign-in', request.url)
+      signInUrl.searchParams.set('redirectTo', pathname)
+      return NextResponse.redirect(signInUrl)
     }
 
     return response
+    
   } catch (error) {
-    // Fail gracefully - allow request to continue
-    console.error('Middleware error:', error)
+    // PRODUCTION: Silent fallback - don't break the app
+    console.error('PROD MIDDLEWARE ERROR:', error)
     return response
   }
 }

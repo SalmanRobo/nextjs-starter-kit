@@ -57,29 +57,80 @@ export const verification = pgTable("verification", {
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 });
 
-// Subscription table for Polar webhook data
-export const subscription = pgTable("subscription", {
+// PropTech Tables
+
+// Properties table for real estate listings
+export const properties = pgTable("properties", {
   id: text("id").primaryKey(),
-  createdAt: timestamp("createdAt").notNull(),
-  modifiedAt: timestamp("modifiedAt"),
-  amount: integer("amount").notNull(),
-  currency: text("currency").notNull(),
-  recurringInterval: text("recurringInterval").notNull(),
-  status: text("status").notNull(),
-  currentPeriodStart: timestamp("currentPeriodStart").notNull(),
-  currentPeriodEnd: timestamp("currentPeriodEnd").notNull(),
-  cancelAtPeriodEnd: boolean("cancelAtPeriodEnd").notNull().default(false),
-  canceledAt: timestamp("canceledAt"),
-  startedAt: timestamp("startedAt").notNull(),
-  endsAt: timestamp("endsAt"),
-  endedAt: timestamp("endedAt"),
-  customerId: text("customerId").notNull(),
-  productId: text("productId").notNull(),
-  discountId: text("discountId"),
-  checkoutId: text("checkoutId").notNull(),
-  customerCancellationReason: text("customerCancellationReason"),
-  customerCancellationComment: text("customerCancellationComment"),
-  metadata: text("metadata"), // JSON string
-  customFieldData: text("customFieldData"), // JSON string
-  userId: text("userId").references(() => user.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  type: text("type").notNull(), // 'apartment', 'villa', 'commercial', 'office'
+  purpose: text("purpose").notNull(), // 'rent', 'sale'
+  price: integer("price").notNull(),
+  currency: text("currency").notNull().default("SAR"),
+  bedrooms: integer("bedrooms"),
+  bathrooms: integer("bathrooms"),
+  areaSqm: integer("areaSqm"),
+  furnished: boolean("furnished").notNull().default(false),
+  parking: boolean("parking").notNull().default(false),
+  // Location details
+  city: text("city").notNull(),
+  neighborhood: text("neighborhood"),
+  address: text("address"),
+  latitude: text("latitude"), // Using text for precision
+  longitude: text("longitude"), // Using text for precision
+  // Owner information
+  ownerId: text("ownerId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  // Status and metadata
+  status: text("status").notNull().default("active"), // 'active', 'rented', 'sold', 'inactive'
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+// Property images for galleries
+export const propertyImages = pgTable("propertyImages", {
+  id: text("id").primaryKey(),
+  propertyId: text("propertyId")
+    .notNull()
+    .references(() => properties.id, { onDelete: "cascade" }),
+  imageUrl: text("imageUrl").notNull(),
+  isPrimary: boolean("isPrimary").notNull().default(false),
+  orderIndex: integer("orderIndex").notNull().default(0),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+// Property inquiries from potential buyers/renters
+export const inquiries = pgTable("inquiries", {
+  id: text("id").primaryKey(),
+  propertyId: text("propertyId")
+    .notNull()
+    .references(() => properties.id, { onDelete: "cascade" }),
+  inquirerId: text("inquirerId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  message: text("message"),
+  contactPhone: text("contactPhone"),
+  preferredContact: text("preferredContact").default("email"), // 'email', 'phone', 'whatsapp'
+  status: text("status").notNull().default("pending"), // 'pending', 'responded', 'closed'
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+// Property viewing appointments
+export const viewings = pgTable("viewings", {
+  id: text("id").primaryKey(),
+  propertyId: text("propertyId")
+    .notNull()
+    .references(() => properties.id, { onDelete: "cascade" }),
+  inquirerId: text("inquirerId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  scheduledDate: timestamp("scheduledDate").notNull(),
+  durationMinutes: integer("durationMinutes").notNull().default(30),
+  status: text("status").notNull().default("scheduled"), // 'scheduled', 'completed', 'cancelled'
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 });
