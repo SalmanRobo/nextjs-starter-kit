@@ -32,7 +32,7 @@ import {
   AuthEventType,
   EmailVerificationState
 } from './types';
-import { authService } from './service';
+import { clientAuthService } from './service-client';
 import { AUTH_CONFIG, AUTH_MESSAGES } from './config';
 import { Session, AuthChangeEvent } from '@supabase/supabase-js';
 
@@ -280,7 +280,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signIn = useCallback(async (credentials: SignInCredentials) => {
     clearError();
     
-    const result = await authService.signIn(credentials);
+    const result = await clientAuthService.signIn(credentials);
     
     if (result.success) {
       toast.success(AUTH_MESSAGES.SIGN_IN_SUCCESS);
@@ -300,7 +300,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signUp = useCallback(async (credentials: SignUpCredentials) => {
     clearError();
     
-    const result = await authService.signUp(credentials);
+    const result = await clientAuthService.signUp(credentials);
     
     if (result.success) {
       if (result.needsVerification) {
@@ -342,7 +342,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signOut = useCallback(async () => {
     clearError();
     
-    const result = await authService.signOut();
+    const result = await clientAuthService.signOut();
     
     if (result.success) {
       toast.success(AUTH_MESSAGES.SIGN_OUT_SUCCESS);
@@ -360,7 +360,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signInWithOAuth = useCallback(async (options: OAuthSignInOptions) => {
     clearError();
     
-    const result = await authService.signInWithOAuth(options);
+    const result = await clientAuthService.signInWithOAuth(options);
     
     if (!result.success && result.error) {
       updateAuthState({ error: result.error });
@@ -374,7 +374,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const requestPasswordReset = useCallback(async (request: PasswordResetRequest) => {
     clearError();
     
-    const result = await authService.requestPasswordReset(request);
+    const result = await clientAuthService.requestPasswordReset(request);
     
     if (result.success) {
       toast.success(AUTH_MESSAGES.PASSWORD_RESET_SENT);
@@ -391,7 +391,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const confirmPasswordReset = useCallback(async (confirmation: PasswordResetConfirmation) => {
     clearError();
     
-    const result = await authService.confirmPasswordReset(confirmation);
+    const result = await clientAuthService.confirmPasswordReset(confirmation);
     
     if (result.success) {
       toast.success(AUTH_MESSAGES.PASSWORD_RESET_SUCCESS);
@@ -408,7 +408,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {
     clearError();
     
-    const result = await authService.changePassword(currentPassword, newPassword);
+    const result = await clientAuthService.changePassword(currentPassword, newPassword);
     
     if (result.success) {
       toast.success(AUTH_MESSAGES.PASSWORD_CHANGED);
@@ -430,7 +430,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return { success: false, error: { code: 'cooldown_active', message: 'Please wait before resending.' } as AuthErrorDetails };
     }
     
-    const result = await authService.sendEmailVerification();
+    const result = await clientAuthService.sendEmailVerification();
     
     if (result.success) {
       toast.success(AUTH_MESSAGES.VERIFICATION_SENT);
@@ -503,7 +503,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const updateProfile = useCallback(async (updates: Partial<UserProfile['user_metadata']>) => {
     clearError();
     
-    const result = await authService.updateUserMetadata(updates);
+    const result = await clientAuthService.updateUserMetadata(updates);
     
     if (result.success) {
       toast.success(AUTH_MESSAGES.PROFILE_UPDATED);
@@ -569,9 +569,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Check if action is loading
   const isLoading = useCallback((action?: string) => {
     if (action) {
-      return authService.isLoading(action as any);
+      return clientAuthService.isLoading(action as any);
     }
-    return state.loading || authService.isLoading();
+    return state.loading || clientAuthService.isLoading();
   }, [state.loading]);
 
   // Memoized context value to prevent unnecessary re-renders

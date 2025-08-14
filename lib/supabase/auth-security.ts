@@ -11,6 +11,33 @@ type AccountSecurity = Database['public']['Tables']['account_security']['Row']
  */
 
 /**
+ * Clean options for exactOptionalPropertyTypes compliance
+ */
+export function cleanLogOptions(options: {
+  ipAddress?: string | undefined
+  userAgent?: string | undefined
+  success?: boolean
+  failureReason?: string
+  metadata?: Record<string, any>
+}): {
+  ipAddress?: string
+  userAgent?: string
+  success?: boolean
+  failureReason?: string
+  metadata?: Record<string, any>
+} {
+  const cleaned: any = {}
+  
+  if (options.ipAddress) cleaned.ipAddress = options.ipAddress
+  if (options.userAgent) cleaned.userAgent = options.userAgent
+  if (options.success !== undefined) cleaned.success = options.success
+  if (options.failureReason) cleaned.failureReason = options.failureReason
+  if (options.metadata) cleaned.metadata = options.metadata
+  
+  return cleaned
+}
+
+/**
  * Log authentication activity with comprehensive tracking
  */
 export async function logAuthActivity(
@@ -26,16 +53,19 @@ export async function logAuthActivity(
 ) {
   const supabase = createClient()
   
+  // Filter out undefined values for exactOptionalPropertyTypes compliance
+  const cleanOptions = cleanLogOptions(options)
+  
   try {
     const { data, error } = await supabase
       .rpc('log_auth_activity', {
       p_user_id: userId,
       p_activity_type: activityType,
-      p_ip_address: options.ipAddress || null,
-      p_user_agent: options.userAgent || null,
-      p_success: options.success ?? true,
-      p_failure_reason: options.failureReason || null,
-      p_metadata: options.metadata || {}
+      p_ip_address: cleanOptions.ipAddress || null,
+      p_user_agent: cleanOptions.userAgent || null,
+      p_success: cleanOptions.success ?? true,
+      p_failure_reason: cleanOptions.failureReason || null,
+      p_metadata: cleanOptions.metadata || {}
     })
 
     if (error) {

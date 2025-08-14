@@ -18,7 +18,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { 
@@ -31,19 +31,16 @@ import {
   ArrowLeft,
   WifiOff
 } from "lucide-react";
-import { useAuth } from "@/lib/auth/context";
+import { createClient } from "@/lib/supabase/client";
 import { validatePasswordRealTime, getPasswordStrength } from "@/lib/auth/validation";
-import { PasswordResetConfirmation, FormErrors } from "@/lib/auth/types";
 
 function ResetPasswordContent() {
-  const { confirmPasswordReset, isLoading, error, clearError } = useAuth();
-  const [formData, setFormData] = useState<PasswordResetConfirmation>({
+  const [formData, setFormData] = useState({
     password: "",
     confirmPassword: "",
     accessToken: "",
     refreshToken: "",
   });
-  const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
@@ -56,9 +53,14 @@ function ResetPasswordContent() {
   });
   const [tokenExpired, setTokenExpired] = useState(false);
   const [resetSuccessful, setResetSuccessful] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const [confirmPasswordErrors, setConfirmPasswordErrors] = useState<string[]>([]);
 
   const searchParams = useSearchParams();
   const router = useRouter();
+  const supabase = createClient();
 
   // Extract tokens from URL
   useEffect(() => {
@@ -102,14 +104,14 @@ function ResetPasswordContent() {
   // Clear error when user starts typing
   useEffect(() => {
     if (error) {
-      const timer = setTimeout(clearError, 5000);
+      const timer = setTimeout(() => setError(null), 5000);
       return () => clearTimeout(timer);
     }
-  }, [error, clearError]);
+  }, [error]);
 
   // Progress simulation for loading states
   useEffect(() => {
-    if (isLoading('passwordReset')) {
+    if (loading) {
       const interval = setInterval(() => {
         setProgress(prev => {
           if (prev >= 90) return prev;
@@ -122,7 +124,7 @@ function ResetPasswordContent() {
         setProgress(0);
       };
     }
-  }, [isLoading]);
+  }, [loading]);
 
   // Password strength monitoring
   useEffect(() => {
@@ -135,34 +137,22 @@ function ResetPasswordContent() {
   }, [formData.password]);
 
   // Real-time validation
-  const validateField = useCallback((field: keyof PasswordResetConfirmation, value: any) => {
-    const errors: string[] = [];
-    
-    switch (field) {
-      case 'password':
-        if (value && submitAttempted) {
-          const { errors: pwdErrors } = validatePasswordRealTime(value);
-          errors.push(...pwdErrors);
-        }
-        break;
-      case 'confirmPassword':
-        if (value && submitAttempted && value !== formData.password) {
-          errors.push("Passwords don't match");
-        }
-        break;
+  useEffect(() => {
+    if (formData.password && submitAttempted) {
+      const { errors } = validatePasswordRealTime(formData.password);
+      setPasswordErrors(errors);
+    } else {
+      setPasswordErrors([]);
     }
-    
-    setFormErrors(prev => ({
-      ...prev,
-      [field]: errors.length > 0 ? errors : undefined,
-    }));
-  }, [submitAttempted, formData.password]);
+  }, [formData.password, submitAttempted]);
 
-  // Handle input changes
-  const handleInputChange = (field: keyof PasswordResetConfirmation, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    validateField(field, value);
-  };
+  useEffect(() => {
+    if (formData.confirmPassword && submitAttempted && formData.confirmPassword !== formData.password) {
+      setConfirmPasswordErrors(["Passwords don't match"]);
+    } else {
+      setConfirmPasswordErrors([]);
+    }
+  }, [formData.confirmPassword, formData.password, submitAttempted]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,14 +168,12 @@ function ResetPasswordContent() {
       return;
     }
 
-    // Validate all fields
-    validateField('password', formData.password);
-    validateField('confirmPassword', formData.confirmPassword);
+    // Validate password
+    const { errors } = validatePasswordRealTime(formData.password);
+    setPasswordErrors(errors);
     
-    // Check for validation errors
-    const hasErrors = Object.values(formErrors).some(errors => errors && errors.length > 0);
-    if (hasErrors) {
-      toast.error('Please fix the errors above and try again.');
+    if (errors.length > 0) {
+      toast.error('Please fix the password errors above.');
       return;
     }
 
@@ -197,14 +185,44 @@ function ResetPasswordContent() {
 
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match.');
+      setConfirmPasswordErrors(["Passwords don't match"]);
       return;
     }
 
-    clearError();
-    const result = await confirmPasswordReset(formData);
+    setError(null);
+    setLoading(true);
     
-    if (result.success) {
-      setResetSuccessful(true);
+    try {
+      // Set session from tokens
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: formData.accessToken,
+        refresh_token: formData.refreshToken,
+      });
+
+      if (sessionError) {
+        setError(sessionError.message || 'Invalid or expired reset link');
+        setTokenExpired(true);
+        return;
+      }
+
+      // Update password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: formData.password,
+      });
+
+      if (updateError) {
+        setError(updateError.message || 'Failed to update password');
+        toast.error('Failed to update password');
+      } else {
+        setResetSuccessful(true);
+        toast.success('Password updated successfully!');
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -343,7 +361,7 @@ function ResetPasswordContent() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Loading progress */}
-          {isLoading('passwordReset') && (
+          {loading && (
             <div className="space-y-2">
               <Progress value={progress} className="w-full" />
               <p className="text-sm text-center text-muted-foreground">
@@ -357,12 +375,7 @@ function ResetPasswordContent() {
             <Alert className="bg-red-50 border-red-200">
               <AlertCircle className="h-4 w-4 text-red-600" />
               <AlertDescription className="text-red-800">
-                {error.message}
-                {error.hint && (
-                  <div className="mt-1 text-sm text-red-600">
-                    Tip: {error.hint}
-                  </div>
-                )}
+                {error}
               </AlertDescription>
             </Alert>
           )}
@@ -376,12 +389,12 @@ function ResetPasswordContent() {
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your new password"
                   value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                   required
-                  disabled={isLoading('passwordReset')}
+                  disabled={loading}
                   className={cn(
                     "pr-10",
-                    formErrors.password && formErrors.password.length > 0 && "border-red-500 focus:border-red-500"
+                    passwordErrors.length > 0 && "border-red-500 focus:border-red-500"
                   )}
                 />
                 <Button
@@ -390,7 +403,7 @@ function ResetPasswordContent() {
                   size="sm"
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
-                  disabled={isLoading('passwordReset')}
+                  disabled={loading}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -440,8 +453,8 @@ function ResetPasswordContent() {
                 </div>
               )}
               
-              {formErrors.password && formErrors.password.length > 0 && (
-                <p className="text-sm text-red-600">{formErrors.password[0]}</p>
+              {passwordErrors.length > 0 && (
+                <p className="text-sm text-red-600">{passwordErrors[0]}</p>
               )}
             </div>
 
@@ -453,12 +466,12 @@ function ResetPasswordContent() {
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm your new password"
                   value={formData.confirmPassword}
-                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                  onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                   required
-                  disabled={isLoading('passwordReset')}
+                  disabled={loading}
                   className={cn(
                     "pr-10",
-                    formErrors.confirmPassword && formErrors.confirmPassword.length > 0 && "border-red-500 focus:border-red-500"
+                    confirmPasswordErrors.length > 0 && "border-red-500 focus:border-red-500"
                   )}
                 />
                 <Button
@@ -467,7 +480,7 @@ function ResetPasswordContent() {
                   size="sm"
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  disabled={isLoading('passwordReset')}
+                  disabled={loading}
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -482,8 +495,8 @@ function ResetPasswordContent() {
                   <span className="text-sm">Passwords match</span>
                 </div>
               )}
-              {formErrors.confirmPassword && formErrors.confirmPassword.length > 0 && (
-                <p className="text-sm text-red-600">{formErrors.confirmPassword[0]}</p>
+              {confirmPasswordErrors.length > 0 && (
+                <p className="text-sm text-red-600">{confirmPasswordErrors[0]}</p>
               )}
             </div>
             
@@ -491,13 +504,13 @@ function ResetPasswordContent() {
               type="submit" 
               className="w-full" 
               disabled={
-                isLoading('passwordReset') || 
+                loading || 
                 !isOnline || 
                 !passwordStrength.isStrong ||
                 formData.password !== formData.confirmPassword
               }
             >
-              {isLoading('passwordReset') ? (
+              {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Updating Password...

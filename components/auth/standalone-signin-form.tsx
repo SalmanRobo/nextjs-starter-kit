@@ -1,43 +1,35 @@
 'use client';
 
 /**
- * ALDARI Cross-Domain Sign-In Form
- * Optimized authentication form with cross-domain redirect support
+ * Standalone Sign-In Form
+ * Does not depend on CrossDomainAuthProvider - safe for static generation
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { SearchParamsHandler } from './search-params-handler';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Icons } from '@/components/icons';
-import { useCrossDomainAuth, useGuestGuard } from './cross-domain-auth-provider';
+import { clientAuthService } from '@/lib/auth/service-client';
 import { toast } from 'sonner';
 import { Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 
-interface CrossDomainSignInFormProps {
+interface StandaloneSignInFormProps {
   className?: string;
   onSuccess?: (redirectUrl?: string) => void;
 }
 
-export function CrossDomainSignInForm({ className, onSuccess }: CrossDomainSignInFormProps) {
-  // Auth context
-  const { signIn, loading, error, clearError, isAuthDomain, handleCrossDomainRedirect } = useCrossDomainAuth();
+export function StandaloneSignInForm({ className, onSuccess }: StandaloneSignInFormProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   
-  // Search params state
-  const [redirectTo, setRedirectTo] = useState<string | undefined>(undefined);
+  // Get redirect URL from search params
+  const redirectTo = searchParams.get('redirect_to') || searchParams.get('redirectTo') || undefined;
   
-  // Guest guard - redirect authenticated users
-  useGuestGuard(redirectTo);
-
-  // Handle search params change
-  const handleParamsChange = useCallback((newRedirectTo?: string) => {
-    setRedirectTo(newRedirectTo);
-  }, []);
-
   // Form state
   const [formData, setFormData] = useState({
     email: '',
@@ -46,16 +38,17 @@ export function CrossDomainSignInForm({ className, onSuccess }: CrossDomainSignI
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Clear errors when auth error changes
+  // Clear error after 5 seconds
   useEffect(() => {
     if (error) {
       const timer = setTimeout(() => {
-        clearError();
+        setError(null);
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [error, clearError]);
+  }, [error]);
 
   // Validate form
   const validateForm = useCallback(() => {
@@ -86,7 +79,12 @@ export function CrossDomainSignInForm({ className, onSuccess }: CrossDomainSignI
     if (formErrors[name]) {
       setFormErrors(prev => ({ ...prev, [name]: '' }));
     }
-  }, [formErrors]);
+    
+    // Clear general error
+    if (error) {
+      setError(null);
+    }
+  }, [formErrors, error]);
 
   // Handle form submission
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -99,7 +97,10 @@ export function CrossDomainSignInForm({ className, onSuccess }: CrossDomainSignI
     setIsSubmitting(true);
 
     try {
-      const result = await signIn(formData.email, formData.password);
+      const result = await clientAuthService.signIn({
+        email: formData.email,
+        password: formData.password,
+      });
 
       if (result.success) {
         toast.success('Sign in successful!', {
@@ -107,63 +108,88 @@ export function CrossDomainSignInForm({ className, onSuccess }: CrossDomainSignI
           duration: 3000,
         });
 
-        // Handle cross-domain redirect
+        // Handle redirect
         if (redirectTo) {
           try {
             const redirectUrl = new URL(redirectTo);
             const targetDomain = redirectUrl.hostname;
             
-            // If redirecting to different domain, use cross-domain flow
+            // If redirecting to different domain within aldari.app
             if (targetDomain !== window.location.hostname && targetDomain.includes('aldari.app')) {
-              await handleCrossDomainRedirect(targetDomain, redirectUrl.pathname + redirectUrl.search);
+              // Create a form to post the session to the target domain
+              const form = document.createElement('form');
+              form.method = 'POST';
+              form.action = `https://${targetDomain}/auth/cross-domain`;
+              form.style.display = 'none';
+              
+              // Add session data
+              const sessionData = result.data?.session;
+              if (sessionData) {
+                const accessTokenInput = document.createElement('input');
+                accessTokenInput.type = 'hidden';
+                accessTokenInput.name = 'access_token';
+                accessTokenInput.value = sessionData.access_token;
+                form.appendChild(accessTokenInput);
+                
+                const refreshTokenInput = document.createElement('input');
+                refreshTokenInput.type = 'hidden';
+                refreshTokenInput.name = 'refresh_token';
+                refreshTokenInput.value = sessionData.refresh_token;
+                form.appendChild(refreshTokenInput);
+                
+                const redirectInput = document.createElement('input');
+                redirectInput.type = 'hidden';
+                redirectInput.name = 'redirect_to';
+                redirectInput.value = redirectUrl.pathname + redirectUrl.search;
+                form.appendChild(redirectInput);
+              }
+              
+              document.body.appendChild(form);
+              form.submit();
             } else {
               // Same domain redirect
               window.location.href = redirectTo;
             }
           } catch (error) {
             console.error('Invalid redirect URL:', error);
-            // Fallback to app domain
-            if (isAuthDomain) {
-              await handleCrossDomainRedirect('home.aldari.app', '/dashboard');
-            }
+            // Fallback to home domain
+            window.location.href = 'https://home.aldari.app/dashboard';
           }
         } else {
-          // Default behavior - redirect to app domain if on auth domain
-          if (isAuthDomain) {
-            await handleCrossDomainRedirect('home.aldari.app', '/dashboard');
-          }
+          // Default behavior - redirect to app domain
+          window.location.href = 'https://home.aldari.app/dashboard';
         }
 
         onSuccess?.(redirectTo || undefined);
       } else {
+        setError(result.error?.message || 'Please check your credentials and try again.');
         toast.error('Sign in failed', {
-          description: result.error || 'Please check your credentials and try again.',
+          description: result.error?.message || 'Please check your credentials and try again.',
           duration: 5000,
         });
       }
     } catch (error: any) {
       console.error('[Sign In] Unexpected error:', error);
+      const errorMessage = 'An unexpected error occurred. Please try again.';
+      setError(errorMessage);
       toast.error('Sign in failed', {
-        description: 'An unexpected error occurred. Please try again.',
+        description: errorMessage,
         duration: 5000,
       });
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, validateForm, signIn, redirectTo, isAuthDomain, handleCrossDomainRedirect, onSuccess]);
+  }, [formData, validateForm, redirectTo, onSuccess]);
 
   // Handle OAuth sign-in
   const handleOAuthSignIn = useCallback(async (provider: 'google' | 'apple') => {
-    // Implementation would depend on your OAuth setup
     toast.info(`${provider} sign-in`, {
       description: 'OAuth integration coming soon.',
     });
   }, []);
 
   return (
-    <>
-      <SearchParamsHandler onParamsChange={handleParamsChange} />
-      <Card className={`w-full max-w-md mx-auto ${className}`}>
+    <Card className={`w-full max-w-md mx-auto ${className}`}>
       <CardHeader className="space-y-1">
         <div className="flex items-center justify-center mb-4">
           <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
@@ -193,7 +219,7 @@ export function CrossDomainSignInForm({ className, onSuccess }: CrossDomainSignI
               value={formData.email}
               onChange={handleInputChange}
               placeholder="Enter your email address"
-              disabled={loading || isSubmitting}
+              disabled={isSubmitting}
               className={formErrors.email ? 'border-red-500' : ''}
               autoComplete="email"
             />
@@ -212,7 +238,7 @@ export function CrossDomainSignInForm({ className, onSuccess }: CrossDomainSignI
                 value={formData.password}
                 onChange={handleInputChange}
                 placeholder="Enter your password"
-                disabled={loading || isSubmitting}
+                disabled={isSubmitting}
                 className={`pr-10 ${formErrors.password ? 'border-red-500' : ''}`}
                 autoComplete="current-password"
               />
@@ -246,9 +272,9 @@ export function CrossDomainSignInForm({ className, onSuccess }: CrossDomainSignI
           <Button
             type="submit"
             className="w-full"
-            disabled={loading || isSubmitting}
+            disabled={isSubmitting}
           >
-            {(loading || isSubmitting) && (
+            {isSubmitting && (
               <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
             )}
             Sign in
@@ -270,7 +296,7 @@ export function CrossDomainSignInForm({ className, onSuccess }: CrossDomainSignI
           <Button
             variant="outline"
             onClick={() => handleOAuthSignIn('google')}
-            disabled={loading || isSubmitting}
+            disabled={isSubmitting}
           >
             <Icons.google className="mr-2 h-4 w-4" />
             Google
@@ -278,7 +304,7 @@ export function CrossDomainSignInForm({ className, onSuccess }: CrossDomainSignI
           <Button
             variant="outline"
             onClick={() => handleOAuthSignIn('apple')}
-            disabled={loading || isSubmitting}
+            disabled={isSubmitting}
           >
             <Icons.apple className="mr-2 h-4 w-4" />
             Apple
@@ -307,6 +333,5 @@ export function CrossDomainSignInForm({ className, onSuccess }: CrossDomainSignI
         )}
       </CardContent>
     </Card>
-    </>
   );
 }

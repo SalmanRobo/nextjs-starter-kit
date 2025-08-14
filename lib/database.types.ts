@@ -69,7 +69,7 @@ export type Database = {
         Row: {
           id: string
           user_id: string | null
-          activity_type: 'sign_up' | 'sign_in' | 'sign_out' | 'password_change' | 'password_reset_request' | 'password_reset_complete' | 'email_verification_sent' | 'email_verified' | 'profile_update' | 'account_deleted' | 'failed_login' | 'suspicious_activity' | 'account_locked' | 'account_unlocked'
+          activity_type: 'sign_up' | 'sign_in' | 'sign_out' | 'password_change' | 'password_reset_request' | 'password_reset_complete' | 'email_verification_sent' | 'email_verified' | 'profile_update' | 'account_deleted' | 'failed_login' | 'suspicious_activity' | 'account_locked' | 'account_unlocked' | 'oauth_sign_in' | 'session_created' | 'session_expired' | 'security_violation' | 'rate_limit_exceeded' | 'ip_blocked' | 'oauth_failure' | 'session_refreshed' | 'session_terminated' | 'bulk_session_termination' | 'admin_alert_sent' | 'threat_detected' | 'location_change' | 'device_change' | 'password_breach_detected' | 'account_takeover_attempt' | 'security_notification_sent' | 'admin_intervention_required' | 'brute_force_detected' | 'ip_reputation_check' | 'device_reputation_check'
           ip_address: string | null
           user_agent: string | null
           location: Json | null
@@ -82,7 +82,7 @@ export type Database = {
         Insert: {
           id?: string
           user_id?: string | null
-          activity_type: 'sign_up' | 'sign_in' | 'sign_out' | 'password_change' | 'password_reset_request' | 'password_reset_complete' | 'email_verification_sent' | 'email_verified' | 'profile_update' | 'account_deleted' | 'failed_login' | 'suspicious_activity' | 'account_locked' | 'account_unlocked'
+          activity_type: 'sign_up' | 'sign_in' | 'sign_out' | 'password_change' | 'password_reset_request' | 'password_reset_complete' | 'email_verification_sent' | 'email_verified' | 'profile_update' | 'account_deleted' | 'failed_login' | 'suspicious_activity' | 'account_locked' | 'account_unlocked' | 'oauth_sign_in' | 'session_created' | 'session_expired' | 'security_violation' | 'rate_limit_exceeded' | 'ip_blocked' | 'oauth_failure' | 'session_refreshed' | 'session_terminated' | 'bulk_session_termination' | 'admin_alert_sent' | 'threat_detected' | 'location_change' | 'device_change' | 'password_breach_detected' | 'account_takeover_attempt' | 'security_notification_sent' | 'admin_intervention_required' | 'brute_force_detected' | 'ip_reputation_check' | 'device_reputation_check'
           ip_address?: string | null
           user_agent?: string | null
           location?: Json | null

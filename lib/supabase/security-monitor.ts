@@ -1,5 +1,5 @@
 import { createClient } from './client'
-import { logAuthActivity, checkSuspiciousActivity, lockUserAccount } from './auth-security'
+import { logAuthActivityClient as logAuthActivity, checkSuspiciousActivity, lockUserAccount } from './auth-security-client'
 import { sessionManager } from './session-security'
 
 /**

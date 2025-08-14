@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { crossDomainSSO, CrossDomainSecurity } from '@/lib/auth/cross-domain-sso';
 import { z } from 'zod';
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get current user session
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
     if (sessionError || !session) {
@@ -260,7 +260,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Get current user session
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
     if (sessionError || !session) {
@@ -308,7 +308,8 @@ function getClientIP(request: NextRequest): string {
   const realIP = request.headers.get('x-real-ip');
   
   if (forwarded) {
-    return forwarded.split(',')[0].trim();
+    const firstIP = forwarded.split(',')[0];
+    return firstIP ? firstIP.trim() : 'unknown';
   }
   
   if (realIP) {

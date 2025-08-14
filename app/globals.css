@@ -140,14 +140,14 @@
 @layer components {
     /* Authentication specific styling */
     .auth-page {
-        @apply min-h-screen bg-gradient-to-br from-background via-background to-aldari-sand/20;
+        @apply min-h-screen bg-gradient-to-br from-background via-background to-background;
         background-image: 
             radial-gradient(circle at 20% 80%, rgba(234, 179, 8, 0.1) 0%, transparent 50%),
             radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
     }
     
     .auth-card {
-        @apply bg-card/95 backdrop-blur-sm border border-border/60 shadow-auth-lg rounded-3xl;
+        @apply bg-card/95 backdrop-blur-sm border border-border/60 shadow-xl rounded-3xl;
         box-shadow: 
             0 20px 25px -5px rgba(0, 0, 0, 0.1), 
             0 10px 10px -5px rgba(0, 0, 0, 0.04),
@@ -164,7 +164,7 @@
     
     .auth-button-primary {
         @apply h-12 px-6 rounded-xl bg-primary text-primary-foreground font-medium
-               shadow-auth hover:shadow-auth-lg hover:bg-primary/90
+               shadow-lg hover:shadow-xl hover:bg-primary/90
                focus:ring-4 focus:ring-primary/20 focus:outline-none
                active:scale-95 transition-all duration-200 ease-out
                disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
@@ -172,14 +172,14 @@
     
     .auth-button-secondary {
         @apply h-12 px-6 rounded-xl bg-transparent border-2 border-border/60 text-foreground font-medium
-               hover:bg-accent/50 hover:border-border hover:shadow-auth
+               hover:bg-accent/50 hover:border-border hover:shadow-lg
                focus:ring-4 focus:ring-primary/10 focus:outline-none focus:border-primary/60
                active:scale-95 transition-all duration-200 ease-out
                disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
     }
     
     .auth-divider {
-        @apply relative flex items-center justify-center text-2xs font-medium text-muted-foreground/80 uppercase tracking-wider;
+        @apply relative flex items-center justify-center text-xs font-medium text-muted-foreground/80 uppercase tracking-wider;
     }
     
     .auth-divider::before {
@@ -192,11 +192,11 @@
     }
     
     .auth-error {
-        @apply text-2xs text-destructive font-medium mt-1.5 animate-slide-down;
+        @apply text-xs text-destructive font-medium mt-1.5 animate-in slide-in-from-top-2 duration-200;
     }
     
     .auth-success {
-        @apply text-2xs text-success font-medium mt-1.5 animate-slide-down;
+        @apply text-xs text-success font-medium mt-1.5 animate-in slide-in-from-top-2 duration-200;
     }
     
     .password-strength-weak {

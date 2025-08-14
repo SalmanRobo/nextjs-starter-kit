@@ -39,7 +39,18 @@
       "Bash(git push:*)",
       "Bash(node:*)",
       "Bash(git commit:*)",
-      "WebFetch(domain:home.aldari.app)"
+      "WebFetch(domain:home.aldari.app)",
+      "Bash(curl:*)",
+      "WebFetch(domain:localhost)",
+      "mcp__supabase__get_project_url",
+      "mcp__supabase__get_anon_key",
+      "Bash(vercel:*)",
+      "WebFetch(domain:nextjs-starter-jqdn21lfd-salmans-projects-cbcc56b1.vercel.app)",
+      "Bash(mv:*)",
+      "mcp__supabase__get_advisors",
+      "mcp__supabase__get_logs",
+      "Bash(grep:*)",
+      "Bash(find:*)"
     ],
     "defaultMode": "acceptEdits"
   }

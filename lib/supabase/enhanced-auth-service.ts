@@ -1,5 +1,4 @@
 import { createClient } from './client'
-import { createServerClient } from './server'
 import { sessionManager } from './session-security'
 import { initiateGoogleOAuth, initiateAppleOAuth, handleOAuthCallback, secureOAuthLogout } from './oauth-security'
 import { 
@@ -16,15 +15,14 @@ import {
   reportBruteForceAttempt 
 } from './security-monitor'
 import { 
-  logAuthActivity, 
-  isAccountLocked, 
-  incrementFailedLoginAttempts, 
+  logAuthActivityClient as logAuthActivity,
+  getClientIPClient as getClientIP,
+  getUserAgentClient as getUserAgent,
+  incrementFailedLoginAttempts,
   resetFailedLoginAttempts,
   checkPasswordHistory,
-  addPasswordToHistory,
-  getClientIP,
-  getUserAgent
-} from './auth-security'
+  addPasswordToHistory
+} from './auth-security-client'
 
 /**
  * Enhanced Supabase Authentication Service

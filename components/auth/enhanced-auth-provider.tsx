@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { authService } from '@/lib/supabase/enhanced-auth-service'
 import { sessionManager } from '@/lib/supabase/session-security'
 import { securityMonitor } from '@/lib/supabase/security-monitor'
-import { logAuthActivity } from '@/lib/supabase/auth-security'
+import { logAuthActivityClient, getUserAgentClient, getClientIPClient } from '@/lib/supabase/auth-security-client'
 
 /**
  * Enhanced Authentication Provider with Security Features

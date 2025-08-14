@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { handleOAuthCallback } from '@/lib/supabase/oauth-security'
-import { logAuthActivity, getClientIP, getUserAgent } from '@/lib/supabase/auth-security'
+import { logAuthActivity, getClientIP, getUserAgent, cleanLogOptions } from '@/lib/supabase/auth-security'
 import { securityMonitor } from '@/lib/supabase/security-monitor'
 
 /**
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       console.error('OAuth error:', error)
       
       // Log OAuth failure
-      await logAuthActivity('unknown', 'oauth_failure', {
+      await logAuthActivity('unknown', 'oauth_failure', cleanLogOptions({
         success: false,
         failureReason: `OAuth error: ${error}`,
         ipAddress: getClientIP(request),
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
           error,
           error_description: requestUrl.searchParams.get('error_description')
         }
-      })
+      }))
 
       // Redirect to sign-in with error
       return NextResponse.redirect(
@@ -73,16 +73,15 @@ export async function GET(request: NextRequest) {
         await securityMonitor.recordSecurityEvent(
           'unknown',
           'unusual_oauth_activity',
-          'high',
-          getClientIP(request),
-          getUserAgent(request),
-          undefined,
           {
             provider,
             error: callbackResult.error,
             stateProvided: !!state,
             codeProvided: !!code
-          }
+          },
+          'high',
+          getClientIP(request),
+          getUserAgent(request)
         )
       }
 
@@ -92,7 +91,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Create Supabase session
-    const supabase = createServerClient(request)
+    const supabase = await createClient()
 
     if (callbackResult.user) {
       // Log successful OAuth login
@@ -113,15 +112,14 @@ export async function GET(request: NextRequest) {
         await securityMonitor.recordSecurityEvent(
           callbackResult.user.id,
           'unusual_oauth_activity',
-          'low', // Start with low severity for successful OAuth
-          getClientIP(request),
-          getUserAgent(request),
-          undefined,
           {
             provider,
             success: true,
             newUser: !callbackResult.user.email_confirmed_at
-          }
+          },
+          'low', // Start with low severity for successful OAuth
+          getClientIP(request),
+          getUserAgent(request)
         )
       } catch (error) {
         console.warn('Failed to record OAuth security event:', error)

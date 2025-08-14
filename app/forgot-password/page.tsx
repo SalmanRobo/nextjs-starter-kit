@@ -17,51 +17,47 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { AlertCircle, CheckCircle, Loader2, Mail, ArrowLeft, WifiOff, Shield, Clock, HelpCircle } from "lucide-react";
-import { useAuth } from "@/lib/auth/context";
+import { createClient } from "@/lib/supabase/client";
 import { validateEmailRealTime } from "@/lib/auth/validation";
-import { PasswordResetRequest, FormErrors } from "@/lib/auth/types";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 
 // Enhanced validation schema
-const resetPasswordSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Email is required")
-    .email("Please enter a valid email address")
-    .max(320, "Email is too long")
-    .toLowerCase()
-    .trim(),
-});
-
-type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+const validateEmail = (email: string): string[] => {
+  const errors: string[] = [];
+  
+  if (!email) {
+    errors.push("Email is required");
+    return errors;
+  }
+  
+  if (email.length > 320) {
+    errors.push("Email is too long");
+  }
+  
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    errors.push("Please enter a valid email address");
+  }
+  
+  return errors;
+};
 
 export default function ForgotPassword() {
-  const { requestPasswordReset, isLoading, error, clearError } = useAuth();
-  const [formData, setFormData] = useState<PasswordResetRequest>({
-    email: "",
-  });
-  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isOnline, setIsOnline] = useState(true);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [emailErrors, setEmailErrors] = useState<string[]>([]);
+
+  const supabase = createClient();
 
   // Network status monitoring
   useEffect(() => {
@@ -80,14 +76,14 @@ export default function ForgotPassword() {
   // Clear error when user starts typing
   useEffect(() => {
     if (error) {
-      const timer = setTimeout(clearError, 5000);
+      const timer = setTimeout(() => setError(null), 5000);
       return () => clearTimeout(timer);
     }
-  }, [error, clearError]);
+  }, [error]);
 
   // Progress simulation for loading states
   useEffect(() => {
-    if (isLoading('passwordReset')) {
+    if (loading) {
       const interval = setInterval(() => {
         setProgress(prev => {
           if (prev >= 90) return prev;
@@ -100,7 +96,7 @@ export default function ForgotPassword() {
         setProgress(0);
       };
     }
-  }, [isLoading]);
+  }, [loading]);
 
   // Cooldown timer
   useEffect(() => {
@@ -113,24 +109,14 @@ export default function ForgotPassword() {
   }, [cooldownSeconds]);
 
   // Real-time validation
-  const validateField = useCallback((field: keyof PasswordResetRequest, value: any) => {
-    const errors: string[] = [];
-    
-    if (field === 'email' && value && submitAttempted) {
-      errors.push(...validateEmailRealTime(value));
+  useEffect(() => {
+    if (email && submitAttempted) {
+      const errors = validateEmail(email);
+      setEmailErrors(errors);
+    } else {
+      setEmailErrors([]);
     }
-    
-    setFormErrors(prev => ({
-      ...prev,
-      [field]: errors.length > 0 ? errors : undefined,
-    }));
-  }, [submitAttempted]);
-
-  // Handle input changes
-  const handleInputChange = (field: keyof PasswordResetRequest, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    validateField(field, value);
-  };
+  }, [email, submitAttempted]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,21 +133,38 @@ export default function ForgotPassword() {
     }
 
     // Validate email
-    validateField('email', formData.email);
+    const errors = validateEmail(email);
+    setEmailErrors(errors);
     
-    // Check for validation errors
-    const hasErrors = Object.values(formErrors).some(errors => errors && errors.length > 0);
-    if (hasErrors || !formData.email) {
+    if (errors.length > 0) {
       toast.error('Please enter a valid email address.');
       return;
     }
 
-    clearError();
-    const result = await requestPasswordReset(formData);
+    setError(null);
+    setLoading(true);
     
-    if (result.success) {
-      setSubmitted(true);
-      setCooldownSeconds(60); // 60 second cooldown
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (resetError) {
+        setError(resetError.message || 'Failed to send reset email');
+        toast.error('Failed to send reset email');
+        setCooldownSeconds(30); // Short cooldown on error
+      } else {
+        setSubmitted(true);
+        setCooldownSeconds(60); // 60 second cooldown on success
+        toast.success('Reset email sent!');
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      setCooldownSeconds(30);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -171,12 +174,27 @@ export default function ForgotPassword() {
       return;
     }
 
-    clearError();
-    const result = await requestPasswordReset(formData);
+    setError(null);
+    setLoading(true);
     
-    if (result.success) {
-      setCooldownSeconds(60);
-      toast.success('Reset email sent again!');
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (resetError) {
+        setError(resetError.message || 'Failed to send reset email');
+        toast.error('Failed to send reset email');
+      } else {
+        setCooldownSeconds(60);
+        toast.success('Reset email sent again!');
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -205,7 +223,7 @@ export default function ForgotPassword() {
             </CardTitle>
             <CardDescription>
               We've sent password reset instructions to{" "}
-              <span className="font-medium">{formData.email}</span>
+              <span className="font-medium">{email}</span>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -229,9 +247,9 @@ export default function ForgotPassword() {
                   variant="outline" 
                   className="w-full"
                   onClick={handleResend}
-                  disabled={isLoading('passwordReset') || cooldownSeconds > 0 || !isOnline}
+                  disabled={loading || cooldownSeconds > 0 || !isOnline}
                 >
-                  {isLoading('passwordReset') ? (
+                  {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Sending...
@@ -289,7 +307,7 @@ export default function ForgotPassword() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Loading progress */}
-          {isLoading('passwordReset') && (
+          {loading && (
             <div className="space-y-2">
               <Progress value={progress} className="w-full" />
               <p className="text-sm text-center text-muted-foreground">
@@ -303,12 +321,7 @@ export default function ForgotPassword() {
             <Alert className="bg-red-50 border-red-200">
               <AlertCircle className="h-4 w-4 text-red-600" />
               <AlertDescription className="text-red-800">
-                {error.message}
-                {error.hint && (
-                  <div className="mt-1 text-sm text-red-600">
-                    Tip: {error.hint}
-                  </div>
-                )}
+                {error}
               </AlertDescription>
             </Alert>
           )}
@@ -322,18 +335,18 @@ export default function ForgotPassword() {
                   id="email"
                   type="email"
                   placeholder="Enter your email address"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
-                  disabled={isLoading('passwordReset')}
+                  disabled={loading}
                   className={cn(
                     "pl-10",
-                    formErrors.email && formErrors.email.length > 0 && "border-red-500 focus:border-red-500"
+                    emailErrors.length > 0 && "border-red-500 focus:border-red-500"
                   )}
                 />
               </div>
-              {formErrors.email && formErrors.email.length > 0 && (
-                <p className="text-sm text-red-600">{formErrors.email[0]}</p>
+              {emailErrors.length > 0 && (
+                <p className="text-sm text-red-600">{emailErrors[0]}</p>
               )}
               <p className="text-xs text-muted-foreground">
                 We'll send a secure link to this email address
@@ -343,9 +356,9 @@ export default function ForgotPassword() {
             <Button 
               type="submit" 
               className="w-full" 
-              disabled={isLoading('passwordReset') || cooldownSeconds > 0 || !isOnline}
+              disabled={loading || cooldownSeconds > 0 || !isOnline}
             >
-              {isLoading('passwordReset') ? (
+              {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Sending Reset Email...

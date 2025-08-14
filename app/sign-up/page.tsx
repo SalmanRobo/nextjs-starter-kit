@@ -4,18 +4,8 @@
 export const dynamic = 'force-dynamic';
 
 import { Suspense } from "react";
-import { CrossDomainSignUpForm } from "@/components/auth/cross-domain-signup-form";
-import { CrossDomainAuthProvider } from "@/components/auth/cross-domain-auth-provider";
+import { StandaloneSignUpForm } from "@/components/auth/standalone-signup-form";
 import { Skeleton } from "@/components/ui/skeleton";
-
-// Main sign-up component
-function SignUpContent() {
-  return (
-    <div className="flex flex-col justify-center items-center w-full min-h-screen py-8 px-4 bg-gradient-to-br from-background via-background to-muted/20">
-      <CrossDomainSignUpForm className="animate-scale-in" />
-    </div>
-  );
-}
 
 // Loading skeleton component
 function SignUpSkeleton() {
@@ -33,13 +23,18 @@ function SignUpSkeleton() {
   );
 }
 
-// Main page component with cross-domain auth provider
-export default function SignUpPage() {
+// Main sign-up component wrapped in Suspense
+function SignUpContent() {
   return (
-    <CrossDomainAuthProvider>
-      <Suspense fallback={<SignUpSkeleton />}>
-        <SignUpContent />
-      </Suspense>
-    </CrossDomainAuthProvider>
+    <Suspense fallback={<SignUpSkeleton />}>
+      <div className="flex flex-col justify-center items-center w-full min-h-screen py-8 px-4 bg-gradient-to-br from-background via-background to-muted/20">
+        <StandaloneSignUpForm className="animate-scale-in" />
+      </div>
+    </Suspense>
   );
+}
+
+// Main page component
+export default function SignUpPage() {
+  return <SignUpContent />;
 }

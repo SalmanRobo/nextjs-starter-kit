@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
 import { ThemeProvider } from "../components/provider";
-import { EnhancedAuthProvider } from "@/components/auth/enhanced-auth-provider";
+import { AuthProvider } from "@/lib/auth/context";
 import { AuthErrorBoundary } from "@/components/auth-error-boundary";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
@@ -44,11 +44,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthErrorBoundary>
-            <EnhancedAuthProvider enableActivityTracking={true} sessionTimeout={30}>
+            <AuthProvider>
               {children}
               <Toaster />
               <Analytics />
-            </EnhancedAuthProvider>
+            </AuthProvider>
           </AuthErrorBoundary>
         </ThemeProvider>
       </body>

@@ -1,18 +1,8 @@
 "use client";
 
 import { Suspense } from "react";
-import { CrossDomainSignInForm } from "@/components/auth/cross-domain-signin-form";
-import { CrossDomainAuthProvider } from "@/components/auth/cross-domain-auth-provider";
+import { StandaloneSignInForm } from "@/components/auth/standalone-signin-form";
 import { Skeleton } from "@/components/ui/skeleton";
-
-// Main sign-in component
-function SignInContent() {
-  return (
-    <div className="flex flex-col justify-center items-center w-full min-h-screen py-8 px-4 bg-gradient-to-br from-background via-background to-muted/20">
-      <CrossDomainSignInForm className="animate-scale-in" />
-    </div>
-  );
-}
 
 // Loading skeleton component
 function SignInSkeleton() {
@@ -30,15 +20,20 @@ function SignInSkeleton() {
   );
 }
 
-// Main page component with cross-domain auth provider
-export default function SignInPage() {
+// Main sign-in component wrapped in Suspense
+function SignInContent() {
   return (
-    <CrossDomainAuthProvider>
-      <Suspense fallback={<SignInSkeleton />}>
-        <SignInContent />
-      </Suspense>
-    </CrossDomainAuthProvider>
+    <Suspense fallback={<SignInSkeleton />}>
+      <div className="flex flex-col justify-center items-center w-full min-h-screen py-8 px-4 bg-gradient-to-br from-background via-background to-muted/20">
+        <StandaloneSignInForm className="animate-scale-in" />
+      </div>
+    </Suspense>
   );
+}
+
+// Main page component
+export default function SignInPage() {
+  return <SignInContent />;
 }
 
 // Force dynamic rendering for authentication pages

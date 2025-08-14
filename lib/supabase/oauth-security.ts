@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'crypto'
 import { createClient } from './client'
-import { logAuthActivity, getClientIP, getUserAgent } from './auth-security'
+import { logAuthActivityClient as logAuthActivity, getClientIPClient as getClientIP, getUserAgentClient as getUserAgent } from './auth-security-client'
 
 /**
  * Advanced OAuth Security Implementation

@@ -1,4 +1,4 @@
-import { logAuthActivity } from './auth-security'
+import { logAuthActivityClient as logAuthActivity } from './auth-security-client'
 
 /**
  * Secure Error Handler for Supabase Authentication

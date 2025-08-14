@@ -1,6 +1,10 @@
 import { createClient } from './client'
-import { createServerClient } from './server'
-import { logAuthActivity, getClientIP, getUserAgent } from './auth-security'
+// Client-side only imports to avoid build errors
+import { logAuthActivityClient, getClientIPClient, getUserAgentClient } from './auth-security-client'
+
+const logAuthActivity = logAuthActivityClient
+const getClientIP = getClientIPClient  
+const getUserAgent = getUserAgentClient
 import { generateDeviceFingerprint } from './oauth-security'
 
 /**
