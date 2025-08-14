@@ -58,7 +58,7 @@ class ClientAuthService {
             signup_user_agent: navigator.userAgent,
             email_verified: false,
           },
-          emailRedirectTo: `${SITE_CONFIG.appUrl}/auth/callback`,
+          emailRedirectTo: `${SITE_CONFIG.url}/auth/callback`,
         },
       });
 
@@ -68,19 +68,22 @@ class ClientAuthService {
                                    error.message?.includes('500') ||
                                    error.message?.includes('email');
         
-        await logAuthActivityClient({
-          user_id: authData?.user?.id || null,
-          activity_type: isEmailDeliveryError ? 'signup_email_delivery_failed' : 'signup_failed',
-          details: {
-            email: data.email,
-            error_code: error.message,
-            error_message: error.message,
-            account_created: !!authData?.user,
-            is_email_error: isEmailDeliveryError,
-          },
-          ip_address: 'client',
-          user_agent: navigator.userAgent,
-        });
+        await logAuthActivityClient(
+          authData?.user?.id || null,
+          isEmailDeliveryError ? 'signup_email_delivery_failed' : 'signup_failed',
+          {
+            ipAddress: 'client',
+            userAgent: navigator.userAgent,
+            success: false,
+            failureReason: error.message,
+            metadata: {
+              email: data.email,
+              error_code: error.message,
+              account_created: !!authData?.user,
+              is_email_error: isEmailDeliveryError,
+            }
+          }
+        );
 
         // For email delivery errors, provide more specific messaging
         const mappedError = this.mapSupabaseError(error);
@@ -95,16 +98,19 @@ class ClientAuthService {
       }
 
       // Log successful signup attempt
-      await logAuthActivityClient({
-        user_id: authData.user?.id || null,
-        activity_type: 'signup_success',
-        details: {
-          email: data.email,
-          email_confirmed: authData.user?.email_confirmed_at ? true : false,
-        },
-        ip_address: 'client',
-        user_agent: navigator.userAgent,
-      });
+      await logAuthActivityClient(
+        authData.user?.id || null,
+        'signup_success',
+        {
+          ipAddress: 'client',
+          userAgent: navigator.userAgent,
+          success: true,
+          metadata: {
+            email: data.email,
+            email_confirmed: authData.user?.email_confirmed_at ? true : false,
+          }
+        }
+      );
 
       return {
         success: true,
@@ -159,17 +165,20 @@ class ClientAuthService {
       });
 
       if (error) {
-        await logAuthActivityClient({
-          user_id: null,
-          activity_type: 'signin_failed',
-          details: {
-            email: data.email,
-            error_code: error.message,
-            error_message: error.message,
-          },
-          ip_address: 'client',
-          user_agent: navigator.userAgent,
-        });
+        await logAuthActivityClient(
+          null,
+          'signin_failed',
+          {
+            ipAddress: 'client',
+            userAgent: navigator.userAgent,
+            success: false,
+            failureReason: error.message,
+            metadata: {
+              email: data.email,
+              error_code: error.message,
+            }
+          }
+        );
 
         return {
           success: false,
@@ -178,16 +187,19 @@ class ClientAuthService {
       }
 
       // Log successful sign in
-      await logAuthActivityClient({
-        user_id: authData.user?.id || null,
-        activity_type: 'signin_success',
-        details: {
-          email: data.email,
-          session_id: authData.session?.access_token.substring(0, 10),
-        },
-        ip_address: 'client',
-        user_agent: navigator.userAgent,
-      });
+      await logAuthActivityClient(
+        authData.user?.id || null,
+        'signin_success',
+        {
+          ipAddress: 'client',
+          userAgent: navigator.userAgent,
+          success: true,
+          metadata: {
+            email: data.email,
+            session_id: authData.session?.access_token.substring(0, 10),
+          }
+        }
+      );
 
       return {
         success: true,
@@ -263,21 +275,24 @@ class ClientAuthService {
       }
 
       const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: `${SITE_CONFIG.authUrl}/reset-password`,
+        redirectTo: `${SITE_CONFIG.url}/reset-password`,
       });
 
       if (error) {
-        await logAuthActivityClient({
-          user_id: null,
-          activity_type: 'password_reset_failed',
-          details: {
-            email: data.email,
-            error_code: error.message,
-            error_message: error.message,
-          },
-          ip_address: 'client',
-          user_agent: navigator.userAgent,
-        });
+        await logAuthActivityClient(
+          null,
+          'password_reset_failed',
+          {
+            ipAddress: 'client',
+            userAgent: navigator.userAgent,
+            success: false,
+            failureReason: error.message,
+            metadata: {
+              email: data.email,
+              error_code: error.message,
+            }
+          }
+        );
 
         return {
           success: false,
@@ -286,15 +301,18 @@ class ClientAuthService {
       }
 
       // Log successful password reset request
-      await logAuthActivityClient({
-        user_id: null,
-        activity_type: 'password_reset_requested',
-        details: {
-          email: data.email,
-        },
-        ip_address: 'client',
-        user_agent: navigator.userAgent,
-      });
+      await logAuthActivityClient(
+        null,
+        'password_reset_requested',
+        {
+          ipAddress: 'client',
+          userAgent: navigator.userAgent,
+          success: true,
+          metadata: {
+            email: data.email,
+          }
+        }
+      );
 
       return {
         success: true,
@@ -363,16 +381,19 @@ class ClientAuthService {
       });
 
       if (error) {
-        await logAuthActivityClient({
-          user_id: null,
-          activity_type: 'password_reset_failed',
-          details: {
-            error_code: error.message,
-            error_message: error.message,
-          },
-          ip_address: 'client',
-          user_agent: navigator.userAgent,
-        });
+        await logAuthActivityClient(
+          null,
+          'password_reset_failed',
+          {
+            ipAddress: 'client',
+            userAgent: navigator.userAgent,
+            success: false,
+            failureReason: error.message,
+            metadata: {
+              error_code: error.message,
+            }
+          }
+        );
 
         return {
           success: false,
@@ -381,13 +402,16 @@ class ClientAuthService {
       }
 
       // Log successful password reset
-      await logAuthActivityClient({
-        user_id: null,
-        activity_type: 'password_reset_success',
-        details: {},
-        ip_address: 'client',
-        user_agent: navigator.userAgent,
-      });
+      await logAuthActivityClient(
+        null,
+        'password_reset_success',
+        {
+          ipAddress: 'client',
+          userAgent: navigator.userAgent,
+          success: true,
+          metadata: {}
+        }
+      );
 
       return {
         success: true,

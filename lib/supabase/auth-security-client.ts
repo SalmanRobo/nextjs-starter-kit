@@ -67,12 +67,22 @@ export async function logAuthActivityClient(
     })
 
     if (error) {
+      // Handle 404 errors gracefully (RPC function not deployed yet)
+      if (error.code === 'PGRST202' || error.message?.includes('function public.log_auth_activity')) {
+        console.warn('Auth activity logging RPC function not available - logging silently disabled')
+        return null
+      }
       console.error('Failed to log auth activity:', error)
       return null
     }
 
     return data
-  } catch (error) {
+  } catch (error: any) {
+    // Graceful degradation for missing database functions
+    if (error?.code === 'PGRST202' || error?.message?.includes('404')) {
+      console.warn('Auth activity logging temporarily unavailable - authentication will continue normally')
+      return null
+    }
     console.error('Error logging auth activity:', error)
     return null
   }

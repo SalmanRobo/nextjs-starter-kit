@@ -50,7 +50,11 @@
       "mcp__supabase__get_advisors",
       "mcp__supabase__get_logs",
       "Bash(grep:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "WebFetch(domain:nextjs-starter-6wtutgtmw-salmans-projects-cbcc56b1.vercel.app)",
+      "WebFetch(domain:nextjs-starter-o687mgcnn-salmans-projects-cbcc56b1.vercel.app)",
+      "mcp__supabase__list_migrations",
+      "mcp__supabase__list_extensions"
     ],
     "defaultMode": "acceptEdits"
   }
