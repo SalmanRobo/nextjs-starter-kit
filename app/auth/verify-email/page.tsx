@@ -164,177 +164,230 @@ function EmailVerificationContent() {
   // Success view
   if (verificationStatus === 'success' || isEmailVerified) {
     return (
-      <div className="flex flex-col justify-center items-center w-full min-h-screen py-8">
-        <Card className="max-w-md w-full mx-4">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="h-6 w-6 text-green-600" />
+      <div className="auth-page flex flex-col justify-center items-center w-full min-h-screen py-8 px-4">
+        <div className="w-full max-w-md animate-scale-in">
+          {/* ALDARI Logo/Brand Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-success to-aldari-gold rounded-2xl mb-4 shadow-auth">
+              <CheckCircle className="h-8 w-8 text-white" />
             </div>
-            <CardTitle className="text-2xl font-bold">
-              Email Verified Successfully!
-            </CardTitle>
-            <CardDescription>
-              Your email address has been confirmed
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert className="bg-green-50 border-green-200">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800">
-                Your account is now fully activated. You can access all features.
-              </AlertDescription>
-            </Alert>
+            <h1 className="text-display-sm text-foreground mb-2">
+              Email verified successfully!
+            </h1>
+            <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
+              Your ALDARI account is now fully activated and ready to use
+            </p>
+          </div>
 
-            <div className="text-center space-y-4">
-              <p className="text-sm text-muted-foreground">
-                You'll be automatically redirected to your dashboard in a few seconds.
-              </p>
-              
-              <Link href="/dashboard">
-                <Button className="w-full">
-                  Continue to Dashboard
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="auth-card w-full">
+            <CardHeader className="text-center pb-6">
+              <CardTitle className="text-xl font-semibold text-foreground">
+                Welcome to ALDARI
+              </CardTitle>
+              <CardDescription className="text-sm text-muted-foreground mt-2">
+                Your account verification is complete
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6 p-6">
+              <div className="p-4 rounded-xl bg-success/10 border border-success/20 animate-slide-down">
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-success">
+                      Account fully activated
+                    </p>
+                    <p className="text-2xs text-success/80 mt-1">
+                      You now have access to all platform features and can start exploring properties.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-center space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  You'll be automatically redirected to your dashboard in a few seconds.
+                </p>
+                
+                <Link href="/dashboard">
+                  <button className="auth-button-primary w-full">
+                    Continue to Dashboard
+                  </button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col justify-center items-center w-full min-h-screen py-8">
+    <div className="auth-page flex flex-col justify-center items-center w-full min-h-screen py-8 px-4">
       {/* Offline indicator */}
       {!isOnline && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
-          <Alert className="bg-red-50 border-red-200 text-red-800">
-            <WifiOff className="h-4 w-4" />
-            <AlertDescription>
-              You're offline. Please check your internet connection.
-            </AlertDescription>
-          </Alert>
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-slide-down">
+          <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 shadow-auth">
+            <div className="flex items-center space-x-3">
+              <WifiOff className="h-5 w-5 text-destructive" />
+              <p className="text-sm font-medium text-destructive">
+                You're offline. Please check your internet connection.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
-      <Card className="max-w-md w-full mx-4">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-            <Mail className="h-6 w-6 text-blue-600" />
+      <div className="w-full max-w-md animate-scale-in">
+        {/* ALDARI Logo/Brand Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary to-aldari-gold rounded-2xl mb-4 shadow-auth">
+            <Mail className="h-8 w-8 text-white" />
           </div>
-          <CardTitle className="text-2xl font-bold">
-            Verify Your Email
-          </CardTitle>
-          <CardDescription>
+          <h1 className="text-display-sm text-foreground mb-2">
+            Verify your email
+          </h1>
+          <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
             {user?.email ? (
-              <>We've sent a verification link to <span className="font-medium">{user.email}</span></>
+              <>We've sent a verification link to <span className="font-semibold text-foreground">{user.email}</span></>
             ) : (
-              "Check your email for a verification link"
+              "Check your email for a verification link to activate your account"
             )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Loading progress */}
-          {isLoading('emailVerification') && (
-            <div className="space-y-2">
-              <Progress value={progress} className="w-full" />
-              <p className="text-sm text-center text-muted-foreground">
-                {verificationStatus === 'sending' ? 'Sending verification email...' : 'Verifying your email...'}
-              </p>
-            </div>
-          )}
+          </p>
+        </div>
 
-          {/* Error display */}
-          {error && (
-            <Alert className="bg-red-50 border-red-200">
-              <AlertCircle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800">
-                {error.message}
-                {error.hint && (
-                  <div className="mt-1 text-sm text-red-600">
-                    Tip: {error.hint}
+        <Card className="auth-card w-full">
+          <CardHeader className="text-center pb-6">
+            <CardTitle className="text-xl font-semibold text-foreground">
+              Email verification required
+            </CardTitle>
+            <CardDescription className="text-sm text-muted-foreground mt-2">
+              Complete your account setup by verifying your email address
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6 p-6">
+            {/* Loading progress */}
+            {isLoading('emailVerification') && (
+              <div className="space-y-3 animate-fade-in">
+                <Progress value={progress} className="w-full h-2" />
+                <p className="text-sm text-center text-muted-foreground font-medium">
+                  {verificationStatus === 'sending' ? 'Sending verification email...' : 'Verifying your email...'}
+                </p>
+              </div>
+            )}
+
+            {/* Error display */}
+            {error && (
+              <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 animate-slide-down">
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-destructive">
+                      {error.message}
+                    </p>
+                    {error.hint && (
+                      <p className="text-2xs text-destructive/80 mt-1">
+                        Tip: {error.hint}
+                      </p>
+                    )}
                   </div>
-                )}
-              </AlertDescription>
-            </Alert>
-          )}
+                </div>
+              </div>
+            )}
 
-          <div className="text-center space-y-4">
-            <div className="text-sm text-muted-foreground space-y-2">
-              <p>Click the verification link in your email to activate your account.</p>
-              <p>Can't find the email? Check your spam folder.</p>
-            </div>
-            
-            <div className="space-y-2">
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={handleResendVerification}
-                disabled={isLoading('emailVerification') || cooldownSeconds > 0 || !isOnline}
-              >
-                {isLoading('emailVerification') ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending...
-                  </>
-                ) : cooldownSeconds > 0 ? (
-                  <>
-                    <Clock className="mr-2 h-4 w-4" />
-                    Resend in {cooldownSeconds}s
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Resend Verification Email
-                  </>
-                )}
-              </Button>
+            <div className="text-center space-y-5">
+              <div className="text-sm text-muted-foreground space-y-3">
+                <p className="leading-relaxed">Click the verification link in your email to activate your account.</p>
+                <p className="text-2xs">Can't find the email? Check your spam folder or try resending.</p>
+              </div>
               
-              <Link href="/dashboard">
-                <Button variant="ghost" className="w-full">
-                  Skip for Now
-                </Button>
-              </Link>
-            </div>
-            
-            <div className="text-xs text-muted-foreground">
-              Need help?{" "}
-              <Link href="/contact" className="text-primary hover:underline">
-                Contact support
-              </Link>
-            </div>
-          </div>
-          
-          {/* Info section */}
-          <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-start space-x-2">
-              <Mail className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div className="text-xs text-blue-800">
-                <p className="font-medium mb-1">Why verify your email?</p>
-                <ul className="space-y-1 text-blue-700">
-                  <li>• Secure your account from unauthorized access</li>
-                  <li>• Receive important notifications</li>
-                  <li>• Access all platform features</li>
-                  <li>• Enable password recovery options</li>
-                </ul>
+              <div className="space-y-3">
+                <button
+                  className={cn(
+                    "auth-button-secondary w-full",
+                    (isLoading('emailVerification') || cooldownSeconds > 0 || !isOnline) && "cursor-not-allowed opacity-70"
+                  )}
+                  onClick={handleResendVerification}
+                  disabled={isLoading('emailVerification') || cooldownSeconds > 0 || !isOnline}
+                >
+                  {isLoading('emailVerification') ? (
+                    <div className="flex items-center justify-center">
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <span>Sending...</span>
+                    </div>
+                  ) : cooldownSeconds > 0 ? (
+                    <div className="flex items-center justify-center">
+                      <Clock className="mr-2 h-4 w-4" />
+                      <span>Resend in {cooldownSeconds}s</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center">
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      <span>Resend verification email</span>
+                    </div>
+                  )}
+                </button>
+                
+                <Link href="/dashboard">
+                  <button className="w-full h-12 px-6 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent/30 font-medium transition-all duration-200">
+                    Skip for now
+                  </button>
+                </Link>
+              </div>
+              
+              <div className="text-2xs text-muted-foreground">
+                Need help?{" "}
+                <Link href="/contact" className="text-primary hover:text-primary/80 font-medium underline-offset-2 hover:underline transition-colors">
+                  Contact support
+                </Link>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Footer links */}
-      <div className="mt-6 text-center space-y-2">
-        <Link href="/sign-in" className="text-sm text-muted-foreground hover:text-primary">
-          <ArrowLeft className="inline mr-1 h-3 w-3" />
-          Back to Sign In
-        </Link>
+            
+            {/* Enhanced Info section */}
+            <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+              <div className="flex items-start space-x-3">
+                <div className="p-1 rounded-lg bg-primary/10">
+                  <Mail className="h-4 w-4 text-primary flex-shrink-0" />
+                </div>
+                <div className="text-2xs">
+                  <p className="font-semibold text-foreground mb-2">Why verify your email?</p>
+                  <ul className="space-y-1.5 text-muted-foreground">
+                    <li className="flex items-start space-x-2">
+                      <span className="mt-1.5 w-1 h-1 bg-primary rounded-full flex-shrink-0"></span>
+                      <span>Secure your account from unauthorized access</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <span className="mt-1.5 w-1 h-1 bg-primary rounded-full flex-shrink-0"></span>
+                      <span>Receive important property notifications</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <span className="mt-1.5 w-1 h-1 bg-primary rounded-full flex-shrink-0"></span>
+                      <span>Access all ALDARI platform features</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <span className="mt-1.5 w-1 h-1 bg-primary rounded-full flex-shrink-0"></span>
+                      <span>Enable password recovery options</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         
-        <p className="text-xs text-muted-foreground">
-          Using a different email?{" "}
-          <Link href="/sign-up" className="text-primary hover:underline">
-            Create new account
+        {/* Footer links */}
+        <div className="text-center mt-8 space-y-3">
+          <Link href="/sign-in" className="inline-flex items-center text-sm text-muted-foreground hover:text-primary transition-colors">
+            <ArrowLeft className="mr-2 h-3 w-3" />
+            Back to Sign In
           </Link>
-        </p>
+          
+          <p className="text-2xs text-muted-foreground/80">
+            Using a different email?{" "}
+            <Link href="/sign-up" className="text-primary hover:text-primary/80 font-medium underline-offset-2 hover:underline transition-colors">
+              Create new account
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -344,22 +397,52 @@ export default function EmailVerification() {
   return (
     <Suspense
       fallback={
-        <div className="flex flex-col justify-center items-center w-full h-screen">
-          <Card className="max-w-md w-full mx-4">
-            <CardHeader className="text-center">
-              <div className="mx-auto w-12 h-12 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse mb-4" />
-              <div className="h-8 w-48 bg-gray-200 dark:bg-gray-800 rounded animate-pulse mx-auto mb-2" />
-              <div className="h-4 w-64 bg-gray-200 dark:bg-gray-800 rounded animate-pulse mx-auto" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
-                <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
-                <div className="h-10 w-full bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
-                <div className="h-10 w-full bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
-              </div>
-            </CardContent>
-          </Card>
+        <div className="auth-page flex flex-col justify-center items-center w-full min-h-screen py-8 px-4">
+          <div className="w-full max-w-md">
+            {/* Logo skeleton */}
+            <div className="text-center mb-8">
+              <Skeleton className="w-16 h-16 rounded-2xl mx-auto mb-4" />
+              <Skeleton className="h-8 w-64 mx-auto mb-2" />
+              <Skeleton className="h-4 w-80 mx-auto" />
+            </div>
+
+            <Card className="auth-card w-full">
+              <CardHeader className="text-center pb-6">
+                <Skeleton className="h-6 w-48 mx-auto mb-2" />
+                <Skeleton className="h-4 w-64 mx-auto" />
+              </CardHeader>
+              <CardContent className="space-y-6 p-6">
+                <div className="text-center space-y-5">
+                  <div className="space-y-3">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-3 w-3/4 mx-auto" />
+                  </div>
+                  <div className="space-y-3">
+                    <Skeleton className="h-12 w-full rounded-xl" />
+                    <Skeleton className="h-12 w-full rounded-xl" />
+                  </div>
+                  <Skeleton className="h-3 w-32 mx-auto" />
+                </div>
+                <div className="p-4 rounded-xl bg-muted/20">
+                  <div className="flex items-start space-x-3">
+                    <Skeleton className="w-6 h-6 rounded-lg" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-2 w-full" />
+                      <Skeleton className="h-2 w-5/6" />
+                      <Skeleton className="h-2 w-4/6" />
+                      <Skeleton className="h-2 w-3/6" />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <div className="text-center mt-8 space-y-3">
+              <Skeleton className="h-4 w-32 mx-auto" />
+              <Skeleton className="h-3 w-48 mx-auto" />
+            </div>
+          </div>
         </div>
       }
     >

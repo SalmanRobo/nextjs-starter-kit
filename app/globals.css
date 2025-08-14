@@ -25,6 +25,8 @@
     --color-input: var(--input);
     --color-border: var(--border);
     --color-destructive: var(--destructive);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
     --color-accent-foreground: var(--accent-foreground);
     --color-accent: var(--accent);
     --color-muted-foreground: var(--muted-foreground);
@@ -61,6 +63,10 @@
     --accent-foreground: #ffffff;
     --destructive: #ff3b30; /* Apple Red */
     --destructive-foreground: #ffffff;
+    --success: #34c759; /* Apple Green */
+    --success-foreground: #ffffff;
+    --warning: #ff9500; /* Apple Orange */
+    --warning-foreground: #ffffff;
     --border: #e2e2e7; /* Lighter, more subtle border */
     --input: #f5f5f7;
     --ring: #0071e3;
@@ -77,6 +83,10 @@
     --sidebar-accent-foreground: #1d1d1f;
     --sidebar-border: #e2e2e7; /* Lighter border */
     --sidebar-ring: #0071e3;
+    /* ALDARI Brand Colors */
+    --aldari-gold: #d4af37; /* Saudi Gold */
+    --aldari-sand: #f4e5b1; /* Desert Sand */
+    --aldari-emerald: #50c878; /* Gulf Emerald */
     /* Apple Fonts */
     --font-apple-system:
         -apple-system, BlinkMacSystemFont, "San Francisco", "Helvetica Neue",
@@ -106,6 +116,7 @@
         @apply bg-background text-foreground font-sans;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
     }
     button,
     input,
@@ -123,5 +134,84 @@
     h5,
     h6 {
         @apply font-medium tracking-tight;
+    }
+}
+
+@layer components {
+    /* Authentication specific styling */
+    .auth-page {
+        @apply min-h-screen bg-gradient-to-br from-background via-background to-aldari-sand/20;
+        background-image: 
+            radial-gradient(circle at 20% 80%, rgba(234, 179, 8, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+    }
+    
+    .auth-card {
+        @apply bg-card/95 backdrop-blur-sm border border-border/60 shadow-auth-lg rounded-3xl;
+        box-shadow: 
+            0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+            0 10px 10px -5px rgba(0, 0, 0, 0.04),
+            0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+    
+    .auth-input {
+        @apply h-12 px-4 rounded-xl border-2 border-border/60 bg-background/50 backdrop-blur-sm 
+               transition-all duration-200 ease-out
+               focus:border-primary/60 focus:ring-4 focus:ring-primary/10 focus:bg-background
+               hover:border-border hover:bg-background/80
+               placeholder:text-muted-foreground/60;
+    }
+    
+    .auth-button-primary {
+        @apply h-12 px-6 rounded-xl bg-primary text-primary-foreground font-medium
+               shadow-auth hover:shadow-auth-lg hover:bg-primary/90
+               focus:ring-4 focus:ring-primary/20 focus:outline-none
+               active:scale-95 transition-all duration-200 ease-out
+               disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+    }
+    
+    .auth-button-secondary {
+        @apply h-12 px-6 rounded-xl bg-transparent border-2 border-border/60 text-foreground font-medium
+               hover:bg-accent/50 hover:border-border hover:shadow-auth
+               focus:ring-4 focus:ring-primary/10 focus:outline-none focus:border-primary/60
+               active:scale-95 transition-all duration-200 ease-out
+               disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+    }
+    
+    .auth-divider {
+        @apply relative flex items-center justify-center text-2xs font-medium text-muted-foreground/80 uppercase tracking-wider;
+    }
+    
+    .auth-divider::before {
+        @apply absolute inset-x-0 top-1/2 h-px bg-gradient-to-r from-transparent via-border to-transparent;
+        content: '';
+    }
+    
+    .auth-divider span {
+        @apply bg-background px-4;
+    }
+    
+    .auth-error {
+        @apply text-2xs text-destructive font-medium mt-1.5 animate-slide-down;
+    }
+    
+    .auth-success {
+        @apply text-2xs text-success font-medium mt-1.5 animate-slide-down;
+    }
+    
+    .password-strength-weak {
+        @apply bg-destructive/20 text-destructive;
+    }
+    
+    .password-strength-fair {
+        @apply bg-warning/20 text-warning;
+    }
+    
+    .password-strength-good {
+        @apply bg-primary/20 text-primary;
+    }
+    
+    .password-strength-strong {
+        @apply bg-success/20 text-success;
     }
 }

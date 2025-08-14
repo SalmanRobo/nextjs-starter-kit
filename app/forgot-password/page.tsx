@@ -15,14 +15,41 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { AlertCircle, CheckCircle, Loader2, Mail, ArrowLeft, WifiOff } from "lucide-react";
+import { AlertCircle, CheckCircle, Loader2, Mail, ArrowLeft, WifiOff, Shield, Clock, HelpCircle } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 import { validateEmailRealTime } from "@/lib/auth/validation";
 import { PasswordResetRequest, FormErrors } from "@/lib/auth/types";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+// Enhanced validation schema
+const resetPasswordSchema = z.object({
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address")
+    .max(320, "Email is too long")
+    .toLowerCase()
+    .trim(),
+});
+
+type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
 export default function ForgotPassword() {
   const { requestPasswordReset, isLoading, error, clearError } = useAuth();

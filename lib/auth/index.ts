@@ -25,6 +25,58 @@ export type {
   AuthEventType,
 } from './types';
 
+// Enhanced utility types
+export type {
+  ExactOptional,
+  StrictPartial,
+  KeysOfType,
+  DeepPartial,
+  NestedKeys,
+  NestedPath,
+  PartialBy,
+  RequiredBy,
+  FormState,
+  ApiResponse,
+  CrossDomainMessage,
+  CrossDomainAuthToken,
+} from './types-utils';
+
+// API types
+export type {
+  ApiRequest,
+  EnhancedApiResponse,
+  ApiErrorResponse,
+  SignInRequest,
+  SignInResponse,
+  SignUpRequest,
+  SignUpResponse,
+  OAuthSignInRequest,
+  OAuthSignInResponse,
+  AuthApiRequest,
+  AuthApiResponse,
+  ApiHandler,
+  ApiMiddleware,
+  ApiRouteConfig,
+} from './api-types';
+
+// Cross-domain types
+export type {
+  DomainConfig,
+  CrossDomainConfig,
+  CrossDomainAuthFlow,
+  CrossDomainAuthResult,
+  CrossDomainTokenMessage,
+  CrossDomainErrorMessage,
+  CrossDomainSuccessMessage,
+  CrossDomainLogoutMessage,
+  CrossDomainRefreshMessage,
+  CrossDomainAuthMessage,
+  SecureCrossDomainMessage,
+  CrossDomainSession,
+  CrossDomainSecurityEvent,
+  CrossDomainError,
+} from './cross-domain-types';
+
 // Context and hooks
 export {
   AuthProvider,
@@ -156,6 +208,52 @@ export const authConfig = {
   isFeatureEnabled: (feature: keyof typeof FEATURE_FLAGS) => 
     FEATURE_FLAGS[feature],
 };
+
+// Enhanced type utilities and runtime validation
+export {
+  TypeUtils,
+  createTypeGuard,
+  UserProfileGuard,
+  SessionGuard,
+  AuthErrorGuard,
+  CrossDomainMessageGuard,
+  isUserProfile,
+  isSession,
+  isAuthError,
+  isCrossDomainMessage,
+  assertUserProfile,
+  assertSession,
+  assertAuthError,
+  assertCrossDomainMessage,
+  validateUserProfile,
+  validateSession,
+  validateAuthError,
+  validateCrossDomainMessage,
+  deepMerge,
+  getNestedValue,
+  filterObjectKeys,
+  TypePerformanceMonitor,
+  TypeSafeFormState,
+  validateFormField,
+} from './types-utils';
+
+// Type testing framework (development only)
+export {
+  TypeTestSuite,
+  AuthTypeTests,
+  TypeAssertions,
+  TypeBenchmark,
+  testSupabaseCompatibility,
+} from './type-tests';
+
+// API and cross-domain types collections
+export {
+  ApiTypes,
+} from './api-types';
+
+export {
+  CrossDomainTypes,
+} from './cross-domain-types';
 
 // Main service instance for convenience
 export default authService;

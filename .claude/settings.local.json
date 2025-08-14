@@ -37,7 +37,9 @@
       "WebFetch(domain:auth.aldari.app)",
       "Bash(git add:*)",
       "Bash(git push:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:home.aldari.app)"
     ],
     "defaultMode": "acceptEdits"
   }

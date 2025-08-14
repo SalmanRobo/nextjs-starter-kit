@@ -21,11 +21,13 @@ const getEnvVar = (key: string, defaultValue?: string): string => {
   return value || '';
 };
 
-// Site configuration
+// Cross-domain site configuration
 export const SITE_CONFIG = {
   name: getEnvVar('NEXT_PUBLIC_APP_NAME', 'ALDARI'),
   url: getEnvVar('NEXT_PUBLIC_APP_URL', 'http://localhost:3000'),
-  domain: getEnvVar('NEXT_PUBLIC_APP_DOMAIN', 'auth.aldari.app'),
+  authDomain: getEnvVar('NEXT_PUBLIC_AUTH_DOMAIN', 'auth.aldari.app'),
+  appDomain: getEnvVar('NEXT_PUBLIC_APP_DOMAIN', 'home.aldari.app'),
+  cookieDomain: '.aldari.app', // Allows cross-domain cookies
   description: "Saudi Arabia's premier property platform",
   supportEmail: getEnvVar('NEXT_PUBLIC_SUPPORT_EMAIL', 'support@aldari.app'),
   defaultLocale: getEnvVar('NEXT_PUBLIC_DEFAULT_LOCALE', 'en') as 'en' | 'ar',
@@ -177,7 +179,7 @@ export const VALIDATION_PATTERNS = {
   name: /^[a-zA-Z\u0600-\u06FF\s]{2,50}$/, // English and Arabic names
 };
 
-// Cookie configuration
+// Cross-domain cookie configuration
 export const COOKIE_CONFIG = {
   name: `${SITE_CONFIG.name.toLowerCase()}-auth`,
   secure: process.env.NODE_ENV === 'production',
@@ -185,7 +187,7 @@ export const COOKIE_CONFIG = {
   httpOnly: true,
   maxAge: AUTH_CONFIG.features.sessionTimeout / 1000, // Convert to seconds
   path: '/',
-  domain: process.env.NODE_ENV === 'production' ? `.${SITE_CONFIG.domain}` : undefined,
+  domain: process.env.NODE_ENV === 'production' ? SITE_CONFIG.cookieDomain : undefined,
 };
 
 // Security headers
